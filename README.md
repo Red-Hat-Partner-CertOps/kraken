@@ -27,9 +27,7 @@ Kraken is a lightweight web-based tool built in Go that allows users to upload a
 1. Clone the repository:
 
    ```bash
-   git clone git@github.com:Red-Hat-Partner-CertOps/kraken.git 
-   or 
-   git clone https://github.com/Red-Hat-Partner-CertOps/kraken.git
+   git clone git@github.com:Red-Hat-Partner-CertOps/kraken.git  
    cd kraken
    ```
 
