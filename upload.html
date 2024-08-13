@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Upload XML File</title>
+</head>
+<body>
+    <h1>Upload XML File</h1>
+    <form enctype="multipart/form-data" action="/upload" method="post">
+        <input type="file" name="file" accept=".xml">
+        <input type="submit" value="Upload">
+    </form>
+    <h2>Extracted Content</h2>
+    {{if .KernelRelease}}
+    <p><strong>Kernel Release:</strong> {{.KernelRelease}}</p>
+    {{end}}
+    {{if .ProductRhel}}
+    <p><strong>Operating System:</strong> {{.ProductRhel}}</p>
+    {{end}}
+    {{if .RHELVersion}}
+    <p><strong>RHEL Version:</strong> {{.RHELVersion}}</p>
+    {{end}}
+    {{if .RhcertVersion}}
+    <p><strong>Test Suite Version:</strong> {{.RhcertVersion}}</p>
+    {{end}}
+    {{if .TestName}}
+    <p><strong>Test Performed:</strong> {{.TestName}}</p>
+    {{end}}
+    {{if .TestStatus}}
+    <p><strong>Test Status:</strong> {{.TestStatus}}</p>
+    {{end}}
+    {{if .KdumpConfig}}
+    <p><strong>Kdump Configuration:</strong></p>
+    <pre>{{.KdumpConfig}}</pre>
+    {{end}}
+    {{if .UpdatedKdumpConfig}}
+    <p><strong>Updated Kdump Configuration:</strong></p>
+    <pre>{{.UpdatedKdumpConfig}}</pre>
+    {{end}}
+    {{if .SystemctlStatus}}
+    <p><strong>Systemctl Status:</strong></p>
+    <pre>{{.SystemctlStatus}}</pre>
+    {{end}}
+</body>
+</html>
