@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload XML File</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <h1>Kraken</h1>
+    <h2>Web tool to extract information from result.xml</h2>
+    <div class="upload-container">
+        <form enctype="multipart/form-data" action="/upload" method="post" id="upload-form">
+            <div class="drop-zone" id="drop-zone">
+                <p>Drag and drop an XML file here or click to upload</p>
+                <input type="file" name="file" accept=".xml" id="file-input">
+            </div>
+        </form>
+    </div>
+    <div class="content-section">
+        <h2>Extracted Content</h2>
+        {{if .KernelRelease}}
+        <p><strong>Kernel Release:</strong> {{.KernelRelease}}</p>
+        {{end}}
+        {{if .ProductRhel}}
+        <p><strong>Operating System:</strong> {{.ProductRhel}}</p>
+        {{end}}
+        {{if .RHELVersion}}
+        <p><strong>RHEL Version:</strong> {{.RHELVersion}}</p>
+        {{end}}
+        {{if .RhcertVersion}}
+        <p><strong>Test Suite Version:</strong> {{.RhcertVersion}}</p>
+        {{end}}
+        {{if .KdumpConfig}}
+        <p><strong>Kdump Configuration:</strong></p>
+        <pre>{{.KdumpConfig}}</pre>
+        {{end}}
+        {{if .UpdatedKdumpConfig}}
+        <p><strong>Updated Kdump Configuration:</strong></p>
+        <pre>{{.UpdatedKdumpConfig}}</pre>
+        {{end}}
+        {{if .SystemctlStatus}}
+        <p><strong>Kdump Service Status:</strong></p>
+        <pre>{{.SystemctlStatus}}</pre>
+        {{end}}
+        {{if .Error}}
+        <p class="error-log"><strong>Error Log:</strong></p>
+        <pre class="error-log">{{.Error}}</pre>
+        {{end}}
+    </div>
+
+    <script>
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const form = document.getElementById('upload-form');
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                handleFiles(files);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files.length) {
+                handleFiles(files);
+            }
+        });
+
+        function handleFiles(files) {
+            const file = files[0];
+
+            // Validate the file type
+            if (file.type !== "text/xml" && !file.name.endsWith(".xml")) {
+                alert("Please upload a valid XML file.");
+                return;
+            }
+
+            // Automatically submit the form after a valid file is selected
+            form.submit();
+        }
+    </script>
+</body>
+</html>
