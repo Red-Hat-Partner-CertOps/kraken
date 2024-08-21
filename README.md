@@ -14,6 +14,7 @@ Kraken is a lightweight web-based tool built in Go that allows users to upload a
   - **RHEL Version**
   - **Test Suite Version**
   - **Kdump Configuration** and **Updated Kdump Configuration**
+  - **Vmcore status**
   - **Kdump Service Status**
   - **Kdump error log**
 
@@ -51,6 +52,7 @@ Kraken is a lightweight web-based tool built in Go that allows users to upload a
    - **RHEL Version**
    - **Test Suite Version**
    - **Kdump Configuration** and **Updated Kdump Configuration**
+   - **Vmcore status**
    - **Kdump Service Status**
    - **Kdump error log**
 
