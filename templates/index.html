@@ -38,6 +38,10 @@
         {{if .UpdatedKdumpConfig}}
         <p><strong>Updated Kdump Configuration:</strong></p>
         <pre>{{.UpdatedKdumpConfig}}</pre>
+        {{end}} 
+        {{if .VmcoreStatus}}
+        <p><strong>Vmcore status:</strong></p>
+        <pre>{{.VmcoreStatus}}</pre>
         {{end}}
         {{if .SystemctlStatus}}
         <p><strong>Kdump Service Status:</strong></p>

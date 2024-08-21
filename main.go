@@ -104,6 +104,11 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	kdumpConfig := extractSection(output, "kdump configuration:", "Attempting")
 	updatedKdumpConfig := extractSection(output, "updated kdump configuration:", "restarting kdump with new configuration..")
+
+	vmcore := extractSection(output, "Looking for vmcore image", "/output&gt;")
+	errorRegex := regexp.MustCompile(`Error: could not locate vmcore file`)
+	vmcoreStatus := errorRegex.FindStringSubmatch(vmcore)
+
 	systemctlStatus := extractSection(output, "Checking kdump service", "Crash recovery kernel arming")
 	re := regexp.MustCompile(`Active:\s*(\w+)`)
 	match := re.FindStringSubmatch(systemctlStatus)
@@ -112,6 +117,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Debug print
 	fmt.Println("KdumpConfig:", kdumpConfig)
 	fmt.Println("UpdatedKdumpConfig:", updatedKdumpConfig)
+	fmt.Println("Vmcore status:", vmcoreStatus)
 	fmt.Println("SystemctlStatus:", systemctlStatus)
 	if len(match) > 1 {
 		fmt.Printf("systemctl status kdump: %s\n", match[1])
@@ -127,6 +133,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		RhcertVersion      string
 		KdumpConfig        string
 		UpdatedKdumpConfig string
+		VmcoreStatus       string
 		SystemctlStatus    string
 		Error              string
 	}{
@@ -136,6 +143,7 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		RhcertVersion:      certificationTest.RHCertVersion,
 		KdumpConfig:        kdumpConfig,
 		UpdatedKdumpConfig: updatedKdumpConfig,
+		VmcoreStatus:       vmcoreStatus[0],
 		SystemctlStatus:    match[1],
 		Error:              messageStatus,
 	}
