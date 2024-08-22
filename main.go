@@ -103,7 +103,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	output := strings.TrimSpace(certificationTest.Output)
 
 	kdumpConfig := extractSection(output, "kdump configuration:", "updated kdump configuration")
+	if kdumpConfig == " "{
+		kdumpConfig = "kdump configuration not found"
+	}
 	updatedKdumpConfig := extractSection(output, "updated kdump configuration:", "restarting kdump with new configuration..")
+	if updatedKdumpConfig == ""{
+		updatedKdumpConfig = "updated kdump configuration not found"
+	}
 
 	vmcore := extractSection(output, "Looking for vmcore image", "/output&gt;")
 	errorRegex := regexp.MustCompile(`Error: could not locate vmcore file`)
@@ -127,7 +133,11 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	systemctlStatus := extractSection(output, "Checking kdump service", "Crash recovery kernel arming")
 	re := regexp.MustCompile(`Active:\s*(\w+)`)
 	match := re.FindStringSubmatch(systemctlStatus)
+
 	messageStatus := extractSection(output, `<message level="FAIL">`, "</message>")
+	if messageStatus == " "{
+		messageStatus = "No error found"
+	}
 
 	// Debug print
 	fmt.Println("KdumpConfig:", kdumpConfig)
