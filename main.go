@@ -102,12 +102,55 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 
 	output := strings.TrimSpace(certificationTest.Output)
 
+	kernelDebugInfo := extractSection(output, `<command command="rpm -q kernel-debuginfo" return-value="0" signal="0">`, "</command>")
+	if kernelDebugInfo == " " {
+		kernelDebugInfo = "kernelDebugInfo not found"
+	}
+
+	kernelDebugVersion := extractSection(kernelDebugInfo, "<stdout>", "</stdout>")
+	if kernelDebugVersion == "" {
+		kernelDebugVersion = "kernel-Debug version Not found"
+	}
+
+	var debugUtilityCheck string
+
+	kernelDebugVersionSlice := strings.SplitAfter(kernelDebugVersion, "kernel-debuginfo-")
+	filteredVersionSlice := []string{}
+	for _, val := range kernelDebugVersionSlice {
+		trimmedVal := strings.TrimSpace(val)
+		if trimmedVal != "" && trimmedVal != "kernel-debuginfo-" {
+			filteredVersionSlice = append(filteredVersionSlice, trimmedVal)
+		}
+	}
+
+	if len(filteredVersionSlice) == 1 {
+		if certificationTest.Hardware.Release == filteredVersionSlice[0] {
+			debugUtilityCheck = "The kernel-debuginfo utility and kernel version matches."
+		} else {
+			debugUtilityCheck = "The kernel-debuginfo utility and kernel version does not match."
+		}
+	} else {
+		// Multiple values in the slice
+		var matchFound bool
+		for _, val := range filteredVersionSlice {
+			if certificationTest.Hardware.Release != val {
+				matchFound = true
+				break
+			}
+		}
+		if matchFound {
+			debugUtilityCheck = "Some of the kernel-debuginfo utility versions match the kernel version."
+		} else {
+			debugUtilityCheck = "None of the kernel-debuginfo utility versions match the kernel version."
+		}
+	}
+
 	kdumpConfig := extractSection(output, "kdump configuration:", "updated kdump configuration")
-	if kdumpConfig == " "{
+	if kdumpConfig == " " {
 		kdumpConfig = "kdump configuration not found"
 	}
 	updatedKdumpConfig := extractSection(output, "updated kdump configuration:", "restarting kdump with new configuration..")
-	if updatedKdumpConfig == ""{
+	if updatedKdumpConfig == "" {
 		updatedKdumpConfig = "updated kdump configuration not found"
 	}
 
@@ -135,11 +178,13 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	match := re.FindStringSubmatch(systemctlStatus)
 
 	messageStatus := extractSection(output, `<message level="FAIL">`, "</message>")
-	if messageStatus == " "{
+	if messageStatus == " " {
 		messageStatus = "No error found"
 	}
 
 	// Debug print
+	fmt.Println("kernelDebugInfo:", kernelDebugInfo)
+	fmt.Println("kernelDebugVersion:", kernelDebugVersion)
 	fmt.Println("KdumpConfig:", kdumpConfig)
 	fmt.Println("UpdatedKdumpConfig:", updatedKdumpConfig)
 	fmt.Println("Vmcore status:", finalVmcoreStatus)
@@ -157,20 +202,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		ProductRhel        string
 		RHELVersion        string
 		RhcertVersion      string
+		KernelDebugVersion string
 		KdumpConfig        string
 		UpdatedKdumpConfig string
 		VmcoreStatus       string
 		SystemctlStatus    string
+		DebugUtilityCheck  string
 		Error              string
 	}{
 		KernelRelease:      certificationTest.Hardware.Release,
 		ProductRhel:        certificationTest.Hardware.OS.Product,
 		RHELVersion:        certificationTest.Hardware.OS.Release,
 		RhcertVersion:      certificationTest.RHCertVersion,
+		KernelDebugVersion: kernelDebugVersion,
 		KdumpConfig:        kdumpConfig,
 		UpdatedKdumpConfig: updatedKdumpConfig,
 		VmcoreStatus:       finalVmcoreStatus,
 		SystemctlStatus:    match[1],
+		DebugUtilityCheck:  debugUtilityCheck,
 		Error:              messageStatus,
 	}
 

@@ -31,6 +31,9 @@
         {{if .RhcertVersion}}
         <p><strong>Test Suite Version:</strong> {{.RhcertVersion}}</p>
         {{end}}
+        {{if .KernelDebugVersion}}
+        <p><strong>Kernel-debuginfo Version:</strong>{{.KernelDebugVersion}}</p>
+        {{end}}
         {{if .KdumpConfig}}
         <p><strong>Kdump Configuration:</strong></p>
         <pre>{{.KdumpConfig}}</pre>
@@ -46,6 +49,10 @@
         {{if .SystemctlStatus}}
         <p><strong>Kdump Service Status:</strong></p>
         <pre>{{.SystemctlStatus}}</pre>
+        {{end}}
+        {{if .DebugUtilityCheck}}
+        <p><strong>Verify if kernel-debuginfo utility and kernel version matches:</strong></p>
+        <pre>{{.DebugUtilityCheck}}</pre>
         {{end}}
         {{if .Error}}
         <p class="error-log"><strong>Error Log:</strong></p>
