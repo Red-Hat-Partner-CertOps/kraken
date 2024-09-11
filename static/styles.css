@@ -13,8 +13,10 @@ h1, h2 {
     flex-direction: column;
     align-items: center;
     margin-bottom: 30px;
+    pointer-events: auto;
 }
 .drop-zone {
+    margin: auto;
     width: 50%;
     padding: 40px;
     border: 2px dashed #007bff;
