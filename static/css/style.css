@@ -1,0 +1,203 @@
+* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #5c5656;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+/* Background styling */
+.background {
+    background-color: #000000;
+    font-family: Arial, sans-serif;
+    height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Content section */
+.content {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    flex-direction: row;
+    width: 85%;
+}
+
+/* Header styling */
+.header {
+    font-size: 92px;
+    line-height: 1.2;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Description styling */
+.description {
+    color: #ffffff;
+    font-size: 1.5em;
+    margin-top: 20px;
+    max-width: 400px;
+}
+
+/* Vertical button group */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px;
+}
+
+/* Logo styling */
+.logo img {
+    height: 400px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .header {
+        font-size: 64px;
+    }
+
+    .logo img {
+        height: 300px;
+    }
+}
+
+/* Container for centering content */
+.container {
+    text-align: center;
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Title styling */
+h2 {
+    margin-bottom: 20px;
+}
+
+/* Upload form container */
+.upload-container {
+    margin: 20px auto;
+}
+
+/* Label for upload button */
+.upload-label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+/* Input file styling */
+#file-input {
+    display: block;
+    margin: 0 auto 20px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f4f4f4;
+}
+
+/* Upload button */
+.upload-btn {
+    padding: 10px 20px;
+    background-color: #8d1d21;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.upload-btn:hover {
+    background-color: #0056b3;
+}
+
+/* Content Section for Results */
+.content-section {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    margin: 20px auto;
+    max-width: 600px;
+}
+
+/* Strong text style */
+.content-section p strong {
+    font-weight: bold;
+}
+
+/* Style for making text red */
+.red {
+    color: red;
+}
+
+.green {
+    color: green;
+}
+/* Additional styling for output in <pre> tags */
+.status-output {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.error-log {
+    color: red;
+    font-weight: bold;
+}
+
+pre {
+    background-color: #f4f4f4;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    overflow: auto;
+}
+
+.nav-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    margin: 10px 5px;
+    background-color: #007bff;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-btn:hover {
+    background-color: #0056b3;
+}
+
+.nav-btn {
+    color: #fff;
+    text-decoration: none;
+    padding: 15px 30px;
+    background-color: #1d72b8;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.2em;
+    transition: background-color 0.3s ease;
+
+}
+
+.nav-btn:hover {
+    background-color: #145a86;
+
+}

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kraken Web Tool</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Upload rhcert test-results.xml to see extracted content here.</h2>
+        <div class="upload-container">
+            <form enctype="multipart/form-data" action="/upload" method="POST" id="upload-form">
+                <label for="file-input" class="upload-label">Choose an XML file</label>
+                <input type="file" name="file" accept=".xml" id="file-input" required>
+                <button type="submit" class="upload-btn">Upload and Analyse</button>
+            </form>
+            <div class="navigation-buttons">
+                <a href="/" class="nav-btn">Return Home</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

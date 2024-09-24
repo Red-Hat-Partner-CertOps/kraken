@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kraken Analysis Results</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="content-section">
+        {{if .KernelRelease}}
+        <p><strong>Kernel Release:</strong> {{.KernelRelease}}</p>
+        {{end}}
+        {{if .ProductRhel}}
+        <p><strong>Operating System:</strong> {{.ProductRhel}}</p>
+        {{end}}
+        {{if .RHELVersion}}
+        <p><strong>RHEL Version:</strong> {{.RHELVersion}}</p>
+        {{end}}
+        {{if .RhcertVersion}}
+        <p><strong>Test Suite Version:</strong> {{.RhcertVersion}}</p>
+        {{end}}
+        {{if .KernelDebugVersion}}
+        <p><strong>Kernel-debuginfo Version:</strong> {{.KernelDebugVersion}}</p>
+        {{end}}
+        {{if .KdumpConfig}}
+        <p><strong>Kdump Configuration:</strong></p>
+        <pre>{{.KdumpConfig}}</pre>
+        {{end}}
+        {{if .UpdatedKdumpConfig}}
+        <p><strong>Updated Kdump Configuration:</strong></p>
+        <pre>{{.UpdatedKdumpConfig}}</pre>
+        {{end}}
+        {{if .VmcoreStatus}}
+        <p><strong>Vmcore status:</strong></p>
+        <pre class="status-output red">{{.VmcoreStatus}}</pre>
+        {{end}}
+        {{if .SystemctlStatus}}
+        <p><strong>Kdump Service Status:</strong></p>
+        <pre class="status-output green">{{.SystemctlStatus}}</pre>
+        {{end}}
+        {{if .DebugUtilityCheck}}
+        <p><strong>Verify if kernel-debuginfo utility and kernel version matches:</strong></p>
+        <pre>{{.DebugUtilityCheck}}</pre>
+        {{end}}
+        {{if .Error}}
+        <p><strong>Error Log:</strong></p>
+        <pre class="status-output red">{{.Error}}</pre>
+        {{end}}
+        {{if .RecommendedSolution}}
+        <p><strong>Recommended Solution:</strong></p>
+        <a href="{{.RecommendedSolution}}" target="_blank">{{.RecommendedSolution}}</a>
+        {{end}}
+        <div class="navigation-buttons">
+            <a href="/upload" class="nav-btn">Return Upload</a>
+            <a href="/" class="nav-btn">Return Home</a>
+        </div>
+    </div>
+</body>
+</html>
