@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/xml"
 	"fmt"
-	"html"
 	"html/template"
 	"io"
 	"net/http"
@@ -45,7 +44,7 @@ var tmpl = template.Must(template.ParseFiles(
 func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/", homeHandler).Methods("GET")
-	r.HandleFunc("/upload", uploadHandler).Methods("GET","POST")
+	r.HandleFunc("/upload", uploadHandler).Methods("GET", "POST")
 	http.Handle("/", r)
 
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
@@ -60,10 +59,13 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodGet {
-        tmpl.ExecuteTemplate(w, "upload.html", nil)
-    } else if r.Method == http.MethodPost {
-		err := r.ParseMultipartForm(100 << 20)
-		if err != nil {
+		tmpl.ExecuteTemplate(w, "upload.html", nil)
+		return
+	}
+
+	if r.Method == http.MethodPost {
+		// Handle file upload and processing
+		if err := r.ParseMultipartForm(100 << 20); err != nil {
 			http.Error(w, "Unable to parse form", http.StatusBadRequest)
 			return
 		}
@@ -75,165 +77,121 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		defer file.Close()
 
-		tempDir := "uploads"
-		err = os.MkdirAll(tempDir, os.ModePerm)
-		if err != nil {
-			http.Error(w, "Unable to create temporary directory", http.StatusInternalServerError)
-			return
-		}
-		tempFile, err := os.CreateTemp(tempDir, "upload-*.xml")
-		if err != nil {
-			http.Error(w, "Unable to create temporary file", http.StatusInternalServerError)
-			return
-		}
-		defer os.Remove(tempFile.Name())
-
-		_, err = io.Copy(tempFile, file)
-		if err != nil {
-			http.Error(w, "Unable to copy file content", http.StatusInternalServerError)
-			return
-		}
-
-		fileBytes, err := os.ReadFile(tempFile.Name())
+		fileBytes, err := readFile(file)
 		if err != nil {
 			http.Error(w, "Unable to read file", http.StatusInternalServerError)
 			return
 		}
 
-		var certificationTest CertificationTest
-		err = xml.Unmarshal(fileBytes, &certificationTest)
+		certTest, err := parseCertificationTest(fileBytes)
 		if err != nil {
 			http.Error(w, "Unable to parse XML", http.StatusInternalServerError)
 			return
 		}
 
-		output := strings.TrimSpace(certificationTest.Output)
-
-		kernelDebugInfo := extractSection(output, `<command command="rpm -q kernel-debuginfo" return-value="0" signal="0">`, "</command>")
-		if kernelDebugInfo == " " {
-			kernelDebugInfo = "kernelDebugInfo not found"
-		}
-
-		kernelDebugVersion := extractSection(kernelDebugInfo, "<stdout>", "</stdout>")
-		if kernelDebugVersion == "" {
-			kernelDebugVersion = "kernel-Debug version Not found"
-		}
-
-		var debugUtilityCheck string
-
-		kernelDebugVersionSlice := strings.SplitAfter(kernelDebugVersion, "kernel-debuginfo-")
-		filteredVersionSlice := []string{}
-		for _, val := range kernelDebugVersionSlice {
-			trimmedVal := strings.TrimSpace(val)
-			if trimmedVal != "" && trimmedVal != "kernel-debuginfo-" {
-				filteredVersionSlice = append(filteredVersionSlice, trimmedVal)
-			}
-		}
-
-		if len(filteredVersionSlice) == 1 {
-			if certificationTest.Hardware.Release == filteredVersionSlice[0] {
-				debugUtilityCheck = "The kernel-debuginfo utility and kernel version matches."
-			} else {
-				debugUtilityCheck = "The kernel-debuginfo utility and kernel version does not match."
-			}
-		} else {
-			// Multiple values in the slice
-			var matchFound bool
-			for _, val := range filteredVersionSlice {
-				if certificationTest.Hardware.Release != val {
-					matchFound = true
-					break
-				}
-			}
-			if matchFound {
-				debugUtilityCheck = "Some of the kernel-debuginfo utility versions match the kernel version."
-			} else {
-				debugUtilityCheck = "None of the kernel-debuginfo utility versions match the kernel version."
-			}
-		}
-
-		kdumpConfig := extractSection(output, "kdump configuration:", "updated kdump configuration")
-		if kdumpConfig == " " {
-			kdumpConfig = "kdump configuration not found"
-		}
-		updatedKdumpConfig := extractSection(output, "updated kdump configuration:", "restarting kdump with new configuration..")
-		if updatedKdumpConfig == "" {
-			updatedKdumpConfig = "updated kdump configuration not found"
-		}
-
-		vmcore := extractSection(output, "Looking for vmcore image", "/output&gt;")
-		errorRegex := regexp.MustCompile(`Error: could not locate vmcore file`)
-		vmcoreStatus := errorRegex.FindStringSubmatch(vmcore)
-
-		var finalVmcoreStatus string
-
-		if len(vmcoreStatus) > 0 {
-			finalVmcoreStatus = vmcoreStatus[0]
-		} else {
-			foundKdumpRegex := regexp.MustCompile(`Found kdump image:\s*(.*)`)
-			foundKdump := foundKdumpRegex.FindStringSubmatch(vmcore)
-
-			if len(foundKdump) > 0 {
-				finalVmcoreStatus = foundKdump[0]
-			} else {
-				finalVmcoreStatus = "Vmcore status not found"
-			}
-		}
-
-		systemctlStatus := extractSection(output, "Checking kdump service", "Crash recovery kernel arming")
-		re := regexp.MustCompile(`Active:\s*(\w+)`)
-		match := re.FindStringSubmatch(systemctlStatus)
-
-		messageStatus := extractSection(output, `<message level="FAIL">`, "</message>")
-		if messageStatus == " " {
-			messageStatus = "No error found"
-		}
-
-		// Debug print
-		fmt.Println("kernelDebugInfo:", kernelDebugInfo)
-		fmt.Println("kernelDebugVersion:", kernelDebugVersion)
-		fmt.Println("KdumpConfig:", kdumpConfig)
-		fmt.Println("UpdatedKdumpConfig:", updatedKdumpConfig)
-		fmt.Println("Vmcore status:", finalVmcoreStatus)
-		fmt.Println("SystemctlStatus:", systemctlStatus)
-
-		if len(match) > 1 {
-			fmt.Printf("systemctl status kdump: %s\n", match[1])
-		} else {
-			fmt.Println("Status not found")
-		}
-		fmt.Println("Error Log:", messageStatus)
-
-		data := struct {
-			KernelRelease      string
-			ProductRhel        string
-			RHELVersion        string
-			RhcertVersion      string
-			KernelDebugVersion string
-			KdumpConfig        string
-			UpdatedKdumpConfig string
-			VmcoreStatus       string
-			SystemctlStatus    string
-			DebugUtilityCheck  string
-			Error              string
-			RecommendedSolution string
-		}{
-			KernelRelease:      certificationTest.Hardware.Release,
-			ProductRhel:        certificationTest.Hardware.OS.Product,
-			RHELVersion:        certificationTest.Hardware.OS.Release,
-			RhcertVersion:      certificationTest.RHCertVersion,
-			KernelDebugVersion: kernelDebugVersion,
-			KdumpConfig:        kdumpConfig,
-			UpdatedKdumpConfig: updatedKdumpConfig,
-			VmcoreStatus:       finalVmcoreStatus,
-			SystemctlStatus:    match[1],
-			DebugUtilityCheck:  debugUtilityCheck,
-			Error:              messageStatus,
-			RecommendedSolution: "https://access.redhat.com/solutions/4901551",
-		}
+		// Extract information and check conditions
+		data := processCertificationData(certTest)
 
 		tmpl.ExecuteTemplate(w, "upload-result.html", data)
 	}
+}
+
+func readFile(file io.Reader) ([]byte, error) {
+	tempDir := "uploads"
+	err := os.MkdirAll(tempDir, os.ModePerm)
+	if err != nil {
+		return nil, fmt.Errorf("unable to create temporary directory: %v", err)
+	}
+	tempFile, err := os.CreateTemp(tempDir, "upload-*.xml")
+	if err != nil {
+		return nil, fmt.Errorf("unable to create temporary file: %v", err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	_, err = io.Copy(tempFile, file)
+	if err != nil {
+		return nil, fmt.Errorf("unable to copy file content: %v", err)
+	}
+
+	return os.ReadFile(tempFile.Name())
+}
+
+func parseCertificationTest(fileBytes []byte) (*CertificationTest, error) {
+	var certTest CertificationTest
+	err := xml.Unmarshal(fileBytes, &certTest)
+	if err != nil {
+		return nil, err
+	}
+	return &certTest, nil
+}
+
+func processCertificationData(certTest *CertificationTest) map[string]string {
+	output := strings.TrimSpace(certTest.Output)
+
+	kernelDebugInfo := extractSection(output, `<command command="rpm -q kernel-debuginfo" return-value="0" signal="0">`, "</command>")
+	kernelDebugVersion := extractSection(kernelDebugInfo, "<stdout>", "</stdout>")
+	kdumpConfig := extractSection(output, "kdump configuration:", "stderr")
+	updatedKdumpConfig := extractSection(output, "updated kdump configuration:", "restarting kdump with new configuration..")
+	vmcoreStatus := checkVmcoreStatus(output)
+	systemctlStatus := getSystemctlStatus(output)
+
+	// Debug utility check based on hardware release and kernel debug version
+	debugUtilityCheck := checkDebugUtility(certTest.Hardware.Release, kernelDebugVersion)
+
+	// Recommended solution URL based on kernel release, RHEL version, and vmcore status
+	recommendedSolution := getRecommendedSolution(certTest.Hardware.Release, certTest.Hardware.OS.Release, vmcoreStatus)
+
+	return map[string]string{
+		"KernelRelease":       certTest.Hardware.Release,
+		"ProductRhel":         certTest.Hardware.OS.Product,
+		"RHELVersion":         certTest.Hardware.OS.Release,
+		"RhcertVersion":       certTest.RHCertVersion,
+		"KernelDebugVersion":  kernelDebugVersion,
+		"KdumpConfig":         kdumpConfig,
+		"UpdatedKdumpConfig":  updatedKdumpConfig,
+		"VmcoreStatus":        vmcoreStatus,
+		"SystemctlStatus":     systemctlStatus,
+		"DebugUtilityCheck":   debugUtilityCheck,
+		"RecommendedSolution": recommendedSolution,
+	}
+}
+
+func getSystemctlStatus(output string) string {
+	systemctlOutput := extractSection(output, "systemctl status kdump", "</command>")
+	activeRegex := regexp.MustCompile(`Active:\s*(\w+)`)
+	match := activeRegex.FindStringSubmatch(systemctlOutput)
+	if len(match) > 1 {
+		return match[1] // Return only the "active" part
+	}
+	return "Status not found"
+}
+
+func checkDebugUtility(kernelRelease, kernelDebugVersion string) string {
+	if kernelRelease == kernelDebugVersion {
+		return "The kernel-debuginfo utility and kernel version match."
+	}
+	return "The kernel-debuginfo utility and kernel version do not match."
+}
+
+func getRecommendedSolution(kernelRelease, rhelVersion, vmcoreStatus string) string {
+	if kernelRelease == "5.14.0-427.13.1.el9_4.x86_64" && rhelVersion == "9.4" && vmcoreStatus == "could not locate vmcore file" {
+		return "https://access.redhat.com/solutions/7068656"
+	}
+	return ""
+}
+
+func checkVmcoreStatus(output string) string {
+	vmcore := extractSection(output, "Looking for vmcore image", "/output&gt;")
+	errorRegex := regexp.MustCompile(`Error: could not locate vmcore file`)
+	if errorRegex.MatchString(vmcore) {
+		return "could not locate vmcore file"
+	}
+	foundKdumpRegex := regexp.MustCompile(`Found kdump image:\s*(.*)`)
+	foundKdump := foundKdumpRegex.FindStringSubmatch(vmcore)
+	if len(foundKdump) > 0 {
+		return foundKdump[0]
+	}
+	return "Vmcore status not found"
 }
 
 func extractSection(content, startMarker, endMarker string) string {
@@ -244,10 +202,7 @@ func extractSection(content, startMarker, endMarker string) string {
 	section := content[startIdx+len(startMarker):]
 	endIdx := strings.Index(section, endMarker)
 	if endIdx == -1 {
-		section = strings.TrimSpace(section)
-	} else {
-		section = strings.TrimSpace(section[:endIdx])
+		return strings.TrimSpace(section)
 	}
-
-	return html.UnescapeString(section)
+	return strings.TrimSpace(section[:endIdx])
 }
